@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>လစာစီမံခန့်ခွဲမှုစနစ်</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; overflow-x: hidden; }
+        .page { display: none; padding: 15px; }
+        .active { display: block; }
+        .header { background: #1b4332; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 1000px; margin: auto; margin-bottom: 20px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; text-align: center; }
+        .btn-save { background: #2d6a4f; color: white; width: 100%; margin-top: 20px; }
+        .btn-nav { background: #457b9d; color: white; flex: 1; }
+        .btn-check { background: #e63946; color: white; flex: 1; }
+        .btn-folder { background: #f3722c; color: white; width: 100%; margin-top: 10px; }
+        .btn-payment { background: #d90429; color: white; width: 100%; margin-top: 10px; }
+        .btn-rvk { background: #7b2cbf; color: white; width: 100%; margin-top: 10px; }
+        .btn-final { background: #1b4332; color: white; width: 100%; margin-top: 10px; border: 2px solid #95d5b2; }
+        .btn-excel { background: #2a9d8f; color: white; width: 100%; margin-top: 10px; }
+        .btn-backup { background: #3a86ff; color: white; width: 100%; margin-top: 10px; }
+        .btn-import { background: #277da1; color: white; padding: 20px; border: 2px dashed #1d4d63; display: block; text-align: center; border-radius: 10px; cursor: pointer; margin-bottom: 10px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; display: none; }
+        .s-card { padding: 20px; border-radius: 12px; text-align: center; color: white; font-weight: bold; }
+        .s-salary { background: #2d6a4f; } .s-deduct { background: #bc4749; } .s-net { background: #386641; } .s-dynamic { background: #457b9d; font-size: 0.9em; }
+        .s-card h2 { margin: 10px 0 0 0; font-size: 22px; }
+        .sheet-selector-box { display:none; margin-bottom: 20px; text-align: center; background: #e9ecef; padding: 15px; border-radius: 8px; }
+        select { padding: 8px; border-radius: 5px; border: 1px solid #ced4da; width: 200px; font-weight: bold; }
+        .table-container { overflow-x: auto; background: white; border-radius: 8px; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1000px; }
+        #salaryTable { min-width: 1450px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background: #2d6a4f; color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr.is-away { background-color: #fff0f0 !important; }
+        tr.row-error { background-color: #ffdce0 !important; }
+        .total-row { background-color: #1b4332 !important; color: white !important; font-weight: bold; }
+        .cb-away { transform: scale(1.5); cursor: pointer; }
+        .input-box { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .current-val { font-size: 12px; color: #2d6a4f; font-weight: bold; }
+        .preview-val { font-size: 12px; color: #bc4749; font-weight: bold; }
+        #voucherCapture { width: 420px; background: white; padding: 40px; border: 3px solid #1b4332; margin: auto; color: #000; font-weight: bold; }
+        .v-title h3 { font-size: 24px; margin: 0; color: #1b4332; font-weight: bold; }
+        #autoDateLabel { font-size: 19px; color: #2d6a4f; margin-top: 5px; font-weight: bold; }
+        .v-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1.5px dashed #000; font-size: 18px; font-weight: bold; }
+        .v-total { border-top: 3.5px solid #1b4332; margin-top: 20px; padding-top: 15px; font-size: 23px; color: #2d6a4f; font-weight: bold; }
+        .v-total span:last-child { font-size: 30px; font-weight: bold; }
+        .error-panel { position: fixed; top: 0; right: -350px; width: 320px; height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.2); transition: 0.4s; z-index: 1001; padding: 20px; overflow-y: auto; }
+        .error-panel.show { right: 0; }
+        .err-item { background: #fff0f0; border-left: 5px solid #e63946; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 13px; }
+        .err-item b { color: #d90429; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: none; z-index: 1000; }
+        .overlay.show { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="header"><h3>လစာနှင့် ဖြတ်ငွေစီမံခန့်ခွဲမှုစနစ်</h3></div>
+
+<div id="entryPage" class="page active">
+    <div class="card">
+        <label class="btn-import"><strong>📊 စာရင်းဖိုင် (Excel) တင်ရန် နှိပ်ပါ</strong><input type="file" id="excelFile" accept=".xlsx, .xls" style="display:none;" onchange="handleExcel(event)"></label>
+        
+        <label class="btn-import" style="background: #3a86ff; border: 2px dashed #ffffff; color: white;"><strong>🔄 Backup ဖိုင်ပြန်တင်ရန် (JSON)</strong><input type="file" id="backupFile" accept=".json" style="display:none;" onchange="loadSystemBackup(event)"></label>
+
+        <div id="sheetSelectorBox" class="sheet-selector-box"><label>📄 စာရင်းစာမျက်နှာ (Sheet) ရွေးချယ်ပါ - </label><select id="sheetSelect" onchange="processSelectedSheet()"><option value="">-- ရွေးချယ်ရန် --</option></select></div>
+        
+        <div id="summaryDisplay" class="summary-grid">
+            <div class="s-card s-salary"><span>စုစုပေါင်း ရရှိလစာ</span><h2 id="sumSalary"></h2></div>
+            <div class="s-card s-deduct"><span>စုစုပေါင်း ဖြတ်ငွေ</span><h2 id="sumDeduct"></h2></div>
+            <div class="s-card s-net"><span>စုစုပေါင်း လက်ခံရရှိငွေ</span><h2 id="sumNet"></h2></div>
+        </div>
+        
+        <div id="dynamicSection" style="display:none; margin-top: 25px; border-top: 2px solid #1b4332; padding-top: 15px;">
+            <h4 style="color: #1b4332; text-align: center; margin-bottom: 15px;">💰 ဖြတ်ငွေပေါင်းချုပ်များ</h4>
+            <div id="dynamicSummaryGrid" class="summary-grid" style="display:grid; margin-top: 0;"></div>
+        </div>
+
+        <div id="mainControls" style="display:none; margin-top:25px;">
+            <button class="btn btn-nav" style="width: 100%; margin-bottom:10px;" onclick="showPage('listPage')">📄 စာရင်းစစ်ရန်နှင့် အဝေးရောက်သတ်မှတ်ရန် →</button>
+            <button class="btn btn-payment" style="width: 100%; margin-bottom:10px;" onclick="showPage('awaySummaryPage')">🚩 အဝေးရောက်စာရင်း သီးသန့်ကြည့်ရန် →</button>
+            <button class="btn btn-rvk" style="width: 100%; margin-bottom:10px;" onclick="showPage('rvkPage')">📝 ရေးဗကစာရင်းသွင်းရန်နှင့် ကြည့်ရန် →</button>
+            <button class="btn btn-final" style="width: 100%; margin-bottom:10px;" onclick="showPage('finalSummaryPage')">📈 ရေးဗကဖြတ်ပြီး အနှစ်ချုပ်ကြည့်ရန် →</button>
+            <button class="btn btn-folder" onclick="showPage('folderPage')">📁 တစ်ဦးချင်းစီ ဘောင်ချာထုတ်ရန် →</button>
+            
+            <hr style="margin: 20px 0; border: 1px solid #ddd;">
+            <h4 style="text-align: center; color: #2a9d8f;">📥 သိမ်းဆည်းရန်</h4>
+            <button class="btn btn-excel" onclick="exportAllToExcel()">📥 (Excel) စာရင်းအားလုံးပေါင်းကို သိမ်းမည်</button>
+            <button class="btn btn-backup" onclick="saveSystemBackup()">💾 စနစ်မှတ်တမ်း (Backup) သိမ်းမည်</button>
+        </div>
+    </div>
+</div>
+
+<div id="listPage" class="page"><div class="card" style="max-width: 100%;"><div style="display: flex; gap:10px; margin-bottom:10px;"><button class="btn btn-nav" onclick="showPage('entryPage')">← ရှေ့သို့</button><button class="btn btn-check" onclick="checkDataIntegrity()">🔍 စာရင်းစစ်မည်</button></div><div id="summaryBox" style="display:none; padding:15px; margin:10px 0; border-radius:8px; text-align:center; font-weight:bold; font-size:16px;"></div><div class="table-container"><table id="salaryTable"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div></div></div>
+<div id="editPage" class="page"><div class="card" style="max-width: 650px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><span style="font-weight: bold; font-size: 18px;">✏️ အတိုး/အလျော့ ပြုလုပ်ခြင်း</span><button class="btn btn-nav" onclick="showPage('listPage')">မပြင်တော့ပါ</button></div><div id="editPersonInfo" style="font-weight: bold; color: #1b4332; background: #e9ecef; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;"></div><input type="hidden" id="editIndex"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"><div style="grid-column: span 2; border: 1px solid #2d6a4f; padding: 15px; border-radius: 10px;"><div style="display: flex; justify-content: space-between;"><label style="font-weight: bold;">ရရှိလစာ</label><span class="current-val" id="curSalary"></span></div><input type="number" id="adjSalary" class="input-box" placeholder="အတိုး/အလျော့ရိုက်ပါ" oninput="liveCalc()"><div style="text-align: right; margin-top: 5px;"><span class="preview-val" id="newSalary"></span></div></div><div style="grid-column: span 2; margin-top: 10px;"><label style="font-weight: bold; color: #bc4749;">ဖြတ်စာရင်းများ အတိုး/အလျော့ လုပ်ရန် -</label><div id="dynamicAdjInputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;"></div></div></div><div style="background: #1b4332; color: white; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;"><div style="font-size: 14px;">လက်ခံရရှိငွေ အသစ်ဖြစ်သွားမည့်ပမာဏ</div><h2 id="newNetDisplay"></h2></div><button class="btn btn-save" onclick="saveAdjustments()">✅ စာရင်းအားလုံးကို အတည်ပြုသိမ်းဆည်းမည်</button></div></div>
+<div id="rvkPage" class="page"><div class="card"><div style="display: flex; gap:10px; margin-bottom:15px;"><button class="btn btn-nav" style="flex:0.2;" onclick="showPage('entryPage')">← ရှေ့သို့</button><h4 style="margin:10px 0; color:#7b2cbf; flex:1; text-align:center;">📝 ရေးဗက စာရင်းသွင်းခြင်း</h4></div><div id="rvkInputGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;"><select id="rvkNameSelect" class="input-box" onchange="autoFillRvkData()"><option value="">-- အမည်ရွေးချယ်ပါ --</option></select><input type="text" id="rvkId" class="input-box" placeholder="ကပအမှတ်" readonly style="background: #e9ecef;"><input type="text" id="rvkRank" class="input-box" placeholder="အဆင့်" readonly style="background: #e9ecef;"><input type="number" id="rvkCash" class="input-box" placeholder="ထုတ်ငွေ" readonly style="background: #e9ecef;"><input type="number" id="rvkDed" class="input-box" placeholder="ရေးဗကဖြတ်ငွေ"><input type="text" id="rvkNote" class="input-box" placeholder="အကြောင်းအရာ"><button class="btn btn-save" style="margin-top:5px;" onclick="addRvkEntry()">➕ စာရင်းသွင်းမည်</button></div><div class="table-container"><table id="rvkTable"><thead><tr><th>စဉ်</th><th>ကပအမှတ်</th><th>အဆင့်</th><th>အမည်</th><th>ထုတ်ငွေ</th><th>ရေးဗကဖြတ်ငွေ</th><th>အကြောင်းအရာ</th><th>လုပ်ဆောင်ချက်</th></tr></thead><tbody id="rvkTableBody"></tbody><tfoot><tr class="total-row"><td colspan="4">စုစုပေါင်း</td><td id="rvkTotalCash">၀</td><td id="rvkTotalDed">၀</td><td colspan="2"></td></tr></tfoot></table></div></div></div>
+<div id="awaySummaryPage" class="page"><div class="card"><div style="display: flex; gap:10px; margin-bottom:15px;"><button class="btn btn-nav" onclick="showPage('entryPage')">← ရှေ့သို့</button><h4 style="margin:10px 0; color:#d90429;">🚩 အဝေးရောက်သူများ ထုတ်ပေးရမည့်စာရင်း</h4></div><div class="table-container"><table id="awayTable"><thead><tr><th>စဉ်</th><th>ကပအမ</th><th>အဆင့်</th><th>အမည်</th><th>ထုတ်ပေးရမည့်ငွေ</th></tr></thead><tbody id="awayTableBody"></tbody><tfoot><tr class="total-row"><td colspan="4">အဝေးရောက် စုစုပေါင်းထုတ်ပေးငွေ</td><td id="awayGrandTotal"></td></tr></tfoot></table></div></div></div>
+<div id="folderPage" class="page"><div class="card"><div style="display: flex; gap:10px; margin-bottom:15px;"><button class="btn btn-nav" style="flex:0.3;" onclick="showPage('entryPage')">← ရှေ့သို့</button><h4 style="margin:10px 0; flex:1; color:#1b4332;">📁 ဘောင်ချာထုတ်ရန် အမည်ရွေးပါ</h4></div><div id="nameListContainer"></div></div></div>
+<div id="voucherPage" class="page"><div class="card" style="max-width: 550px; text-align: center;"><div id="voucherCapture"><div class="v-title"><h3>လစာပေးချေမှုဘောင်ချာ</h3><div id="autoDateLabel"></div><small style="font-weight: bold;">ကိုယ်ပိုင်စာရင်းစီမံမှုစနစ်</small></div><div id="voucherBody"></div></div><input type="hidden" id="currentVoucherName"><div style="display:flex; gap:10px; margin-top:20px; flex-wrap: wrap;"><button class="btn btn-nav" style="flex:1;" onclick="showPage('folderPage')">အမည်စာရင်းသို့</button><button class="btn btn-save" style="flex:1;" onclick="downloadVoucher()">📸 သိမ်းမည်</button><button id="shareBtn" class="btn" style="flex:1; background: #3a86ff; color: white;" onclick="shareVoucher()">📤 Share လုပ်မည်</button></div></div></div>
+<div id="finalSummaryPage" class="page"><div class="card"><div style="display: flex; gap:10px; margin-bottom:15px;"><button class="btn btn-nav" style="flex:0.2;" onclick="showPage('entryPage')">← ရှေ့သို့</button><h4 style="margin:10px 0; color:#1b4332; flex:1; text-align:center;">📈 ရေးဗကနှင့် အပ်ငွေအနှစ်ချုပ်</h4></div><div class="summary-grid" style="display:grid;"><div class="s-card s-salary"><span>စုစုပေါင်း ရရှိလစာ</span><h2 id="finalSumSalary"></h2></div><div class="s-card s-deduct"><span>စုစုပေါင်း ဖြတ်ငွေ (အားလုံးပေါင်း)</span><h2 id="finalSumDeduct"></h2></div><div class="s-card s-net"><span>အသားတင် ထုတ်ပေးငွေ</span><h2 id="finalSumNet"></h2></div></div><div id="finalDynamicGrid" class="summary-grid" style="display:grid; margin-top: 15px;"></div></div></div>
+<div id="overlay" class="overlay" onclick="closeErrorPanel()"></div><div id="errorPanel" class="error-panel"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;"><h3 style="margin:0; color:#d90429;">⚠️ စာရင်းအမှားအသေးစိတ်</h3><button class="btn btn-nav" style="padding: 5px 15px;" onclick="closeErrorPanel()">ပိတ်မည်</button></div><div id="errorList"></div></div>
+
+<script>
+    let currentWorkbook = null; let salaryData = []; let rvkData = []; let deductHeaders = []; let errorIndices = [];
+    
+    // မူလ Logic များ (Lock ထားသည့်အတိုင်း မပြောင်းလဲပါ)
+    function formatVal(val, forceZero = false) { if (val === null || val === undefined || val === "" || val === 0 || val === "0") return forceZero ? '၀' : ''; let clean = val.toString().replace(/"/g, ''); const myanDigits = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉']; return clean.replace(/\d/g, d => myanDigits[d]); }
+    function handleExcel(event) { const file = event.target.files[0]; const reader = new FileReader(); reader.onload = (e) => { const data = new Uint8Array(e.target.result); currentWorkbook = XLSX.read(data, { type: 'array' }); const select = document.getElementById('sheetSelect'); select.innerHTML = '<option value="">-- ရွေးချယ်ရန် --</option>'; currentWorkbook.SheetNames.forEach(name => { const opt = document.createElement('option'); opt.value = name; opt.innerText = name; select.appendChild(opt); }); document.getElementById('sheetSelectorBox').style.display = 'block'; }; reader.readAsArrayBuffer(file); }
+    function processSelectedSheet() { const sheetName = document.getElementById('sheetSelect').value; if (!sheetName) return; document.getElementById('summaryBox').style.display = "block"; document.getElementById('summaryBox').innerText = "အရင်ဆုံး စာရင်းစစ်ပါ"; const sheet = currentWorkbook.Sheets[sheetName]; const json = XLSX.utils.sheet_to_json(sheet, { header: 1 }); let headerRowIdx = -1; for (let i = 0; i < json.length; i++) { if (json[i] && (json[i].includes("ကိုယ်ပိုင်အမှတ်") || json[i].includes("ကပအမ"))) { headerRowIdx = i; break; } } const rawH = json[headerRowIdx]; let idCol = rawH.findIndex(h => h && h.toString().match(/ကိုယ်ပိုင်အမှတ်|ကပအမ/)); let nameCol = idCol + 2, salCol = nameCol + 1, netIdx = rawH.length - 1, endIdx = netIdx - 1; deductHeaders = rawH.slice(salCol + 1, endIdx).map(h => h ? h.toString().trim().replace(/"/g, '') : "ဖြတ်ငွေ"); salaryData = []; let totalRowIdx = -1; for (let i = headerRowIdx + 1; i < json.length; i++) { if (json[i] && json[i].some(c => c && c.toString().includes("စုစုပေါင်း"))) { totalRowIdx = i; break; } } const limit = (totalRowIdx !== -1) ? totalRowIdx + 1 : json.length; for (let i = headerRowIdx + 1; i < limit; i++) { const row = json[i]; if (row && (row[idCol] || row[nameCol] || i === totalRowIdx)) { let entry = { id: row[idCol]||"", rank: row[idCol+1]||"", name: (row[nameCol]||"").toString().replace(/"/g,''), salary: parseInt(row[salCol])||0, deds: {}, isAway: false }; deductHeaders.forEach((h, idx) => { entry.deds[h] = parseInt(row[salCol + 1 + idx]) || 0; }); entry.totalDed = parseInt(row[endIdx])||0; entry.net = parseInt(row[netIdx])||0; salaryData.push(entry); } } updateAllSummaries(); updateRvkNameDropdown(); document.getElementById('summaryDisplay').style.display = 'grid'; document.getElementById('dynamicSection').style.display = 'block'; document.getElementById('mainControls').style.display = 'block'; }
+    function goToEdit(idx) { const entry = salaryData[idx]; document.getElementById('editIndex').value = idx; document.getElementById('editPersonInfo').innerText = `${entry.rank} ${entry.name}`; document.getElementById('curSalary').innerText = formatVal(entry.salary.toLocaleString()); let adjHtml = ""; deductHeaders.forEach((h, i) => { const val = entry.deds[h] || 0; adjHtml += `<div><div style="display:flex; justify-content:space-between;"><label style="font-size:13px;">${h}</label><span class="current-val">${formatVal(val.toLocaleString())}</span></div><input type="number" class="input-box adj-ded-in" id="adj_input_${i}" data-header-index="${i}" placeholder="+/- ရိုက်ပါ" oninput="liveCalc()"><div style="text-align:right;"><span class="preview-val preview-ded" id="adj_preview_${i}"></span></div></div>`; }); document.getElementById('dynamicAdjInputs').innerHTML = adjHtml; document.getElementById('adjSalary').value = ""; liveCalc(); showPage('editPage'); }
+    function liveCalc() { const idx = parseInt(document.getElementById('editIndex').value); const entry = salaryData[idx]; const sAdj = parseInt(document.getElementById('adjSalary').value) || 0; const nS = entry.salary + sAdj; document.getElementById('newSalary').innerText = `ဖြစ်သွားမည့်လစာ: ${formatVal(nS.toLocaleString())}`; let nTD = 0; deductHeaders.forEach((h, i) => { const input = document.getElementById(`adj_input_${i}`); const adj = parseInt(input.value) || 0; const finalVal = Math.max(0, (entry.deds[h] || 0) + adj); nTD += finalVal; document.getElementById(`adj_preview_${i}`).innerText = formatVal(finalVal.toLocaleString()); }); document.getElementById('newNetDisplay').innerText = formatVal((nS - nTD).toLocaleString()); }
+    function saveAdjustments() { const idx = parseInt(document.getElementById('editIndex').value); const entry = salaryData[idx]; entry.salary += (parseInt(document.getElementById('adjSalary').value) || 0); let td = 0; deductHeaders.forEach((h, i) => { const adj = parseInt(document.getElementById(`adj_input_${i}`).value) || 0; entry.deds[h] = Math.max(0, (entry.deds[h] || 0) + adj); td += entry.deds[h]; }); entry.totalDed = td; entry.net = entry.salary - td; recalculateTotalRow(); updateAllSummaries(); alert("သိမ်းဆည်းပြီးပါပြီ"); showPage('listPage'); }
+    function recalculateTotalRow() { const tIdx = salaryData.length - 1; const tRow = salaryData[tIdx]; let sS=0, sN=0, sTD=0, sDeds={}; deductHeaders.forEach(h => sDeds[h]=0); for(let i=0; i<tIdx; i++) { sS+=salaryData[i].salary; sN+=salaryData[i].net; sTD+=salaryData[i].totalDed; deductHeaders.forEach(h => sDeds[h]+=(salaryData[i].deds[h]||0)); } tRow.salary=sS; tRow.net=sN; tRow.totalDed=sTD; tRow.deds=sDeds; }
+    function checkDataIntegrity() { errorIndices = []; let errs = []; const tIdx = salaryData.length - 1; salaryData.forEach((r, i) => { if((r.salary - r.totalDed) !== r.net) { errorIndices.push(i); errs.push(`<div class="err-item"><b>${i===tIdx?'စုစုပေါင်း':r.name}</b> မှားနေပါသည်</div>`); } }); const box = document.getElementById('summaryBox'); box.style.display = "block"; if(errs.length > 0) { box.innerText = "⚠️ စာရင်းအမှားရှိပါသည်"; box.style.background="#ffccd5"; document.getElementById('errorList').innerHTML=errs.join(''); openErrorPanel(); } else { box.innerText = "✅ စာရင်းကိုက်ညီပါသည်"; box.style.background="#d8f3dc"; } renderTable(); }
+    function openErrorPanel() { document.getElementById('errorPanel').classList.add('show'); document.getElementById('overlay').classList.add('show'); }
+    function closeErrorPanel() { document.getElementById('errorPanel').classList.remove('show'); document.getElementById('overlay').classList.remove('show'); }
+    function updateAllSummaries() { const t = salaryData[salaryData.length-1]; if(!t) return; document.getElementById('sumSalary').innerText = formatVal(t.salary.toLocaleString()); document.getElementById('sumDeduct').innerText = formatVal(t.totalDed.toLocaleString()); document.getElementById('sumNet').innerText = formatVal(t.net.toLocaleString()); let h=""; deductHeaders.forEach(hd=>{ if(t.deds[hd]>0) h+=`<div class="s-card s-dynamic"><span>${hd}</span><h2>${formatVal(t.deds[hd].toLocaleString())}</h2></div>`; }); document.getElementById('dynamicSummaryGrid').innerHTML=h; }
+    function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='listPage') renderTable(); if(id==='awaySummaryPage') renderAwaySummary(); if(id==='folderPage') renderFolderList(); if(id==='rvkPage'){ updateRvkNameDropdown(); renderRvkTable(); } if(id==='finalSummaryPage') calculateFinalSummary(); }
+    function renderTable() { document.getElementById('tableHead').innerHTML = `<tr><th>စဉ်</th><th>ကပအမ</th><th>အဆင့်</th><th>အမည်</th><th>လစာ</th>${deductHeaders.map(h=>`<th>${h}</th>`).join('')}<th>ဖြတ်ငွေ</th><th>ထုတ်ငွေ</th><th>အဝေး</th><th>ပြင်ရန်</th></tr>`; document.getElementById('tableBody').innerHTML = salaryData.map((r,i)=>{ const isT=i===salaryData.length-1; return `<tr class="${isT?'total-row':''} ${r.isAway?'is-away':''} ${errorIndices.includes(i)?'row-error':''}"><td>${isT?'စုစုပေါင်း':formatVal(i+1,true)}</td><td>${isT?'':formatVal(r.id,true)}</td><td>${r.rank}</td><td>${r.name}</td><td>${formatVal(r.salary.toLocaleString())}</td>${deductHeaders.map(h=>`<td>${formatVal((r.deds[h]||0).toLocaleString())}</td>`).join('')}<td>${formatVal(r.totalDed.toLocaleString())}</td><td style="font-weight:bold;">${formatVal(r.net.toLocaleString())}</td><td>${isT?'':`<input type="checkbox" ${r.isAway?'checked':''} onchange="toggleAway(${i})">`}</td><td>${isT?'':`<button onclick="goToEdit(${i})">ပြင်</button>`}</td></tr>`}).join(''); }
+    function toggleAway(i) { salaryData[i].isAway = !salaryData[i].isAway; renderTable(); }
+    function updateRvkNameDropdown() { document.getElementById('rvkNameSelect').innerHTML = '<option value="">-- ရွေးပါ --</option>' + salaryData.slice(0,-1).map((p,i)=>`<option value="${i}">${p.rank} ${p.name}</option>`).join(''); }
+    function autoFillRvkData() { const i = document.getElementById('rvkNameSelect').value; if(!i) return; const p=salaryData[i]; document.getElementById('rvkId').value=p.id; document.getElementById('rvkRank').value=p.rank; document.getElementById('rvkCash').value=p.net; }
+    function addRvkEntry() { const i = document.getElementById('rvkNameSelect').value; if(!i) return; const p=salaryData[i]; rvkData.push({id:p.id, rank:p.rank, name:p.name, cash:p.net, ded:parseInt(document.getElementById('rvkDed').value)||0, note:document.getElementById('rvkNote').value}); renderRvkTable(); }
+    function renderRvkTable() { let h="", tc=0, td=0; rvkData.forEach((r,i)=>{ tc+=r.cash; td+=r.ded; h+=`<tr><td>${formatVal(i+1,true)}</td><td>${formatVal(r.id,true)}</td><td>${r.rank}</td><td>${r.name}</td><td>${formatVal(r.cash.toLocaleString())}</td><td>${formatVal(r.ded.toLocaleString())}</td><td>${r.note}</td><td><button onclick="rvkData.splice(${i},1);renderRvkTable()">ဖြုတ်</button></td></tr>`; }); document.getElementById('rvkTableBody').innerHTML=h; document.getElementById('rvkTotalCash').innerText=formatVal(tc.toLocaleString()); document.getElementById('rvkTotalDed').innerText=formatVal(td.toLocaleString()); }
+    function calculateFinalSummary() { const t = salaryData[salaryData.length - 1]; if (!t) return; let rvkTotalDed = 0; rvkData.forEach(r => rvkTotalDed += r.ded); let awayNetTotal = 0; salaryData.slice(0, -1).forEach(p => { if (p.isAway) awayNetTotal += p.net; }); const rvkTransferAmount = awayNetTotal + rvkTotalDed; const currentPayableAmount = t.net - rvkTransferAmount; document.getElementById('finalSumSalary').innerText = formatVal(t.salary.toLocaleString()); document.getElementById('finalSumDeduct').innerText = formatVal((t.totalDed + rvkTotalDed + awayNetTotal).toLocaleString()); document.getElementById('finalSumNet').innerText = formatVal(currentPayableAmount.toLocaleString()); let dedHtml = `<div class="s-card" style="background:#7b2cbf; grid-column: 1 / -1; margin-top:10px;"><span>🚩 ရေးဗကသို့ လွှဲရမည့်ငွေ (အဝေးရောက် + ရေးဗကဖြတ်ငွေ)</span><h2>${formatVal(rvkTransferAmount.toLocaleString())}</h2></div><div class="s-card" style="background:#1b4332; grid-column: 1 / -1;"><span>💵 လက်ရှိ လက်ဝယ်မှ ပေးရမည့်ငွေစုစုပေါင်း</span><h2>${formatVal(currentPayableAmount.toLocaleString())}</h2></div><div style="grid-column: 1 / -1; text-align: center; margin-top: 20px; border-bottom: 2px solid #bc4749; padding-bottom: 5px;"><h3 style="color: #bc4749; margin: 0;">📉 ဖြတ်ငွေများ</h3></div>`; if (awayNetTotal > 0) dedHtml += `<div class="s-card" style="background:#d90429;"><span>အဝေးရောက် (စုစုပေါင်း)</span><h2>${formatVal(awayNetTotal.toLocaleString())}</h2></div>`; if (rvkTotalDed > 0) dedHtml += `<div class="s-card" style="background:#9d4edd;"><span>ရေးဗက ဖြတ်ငွေ</span><h2>${formatVal(rvkTotalDed.toLocaleString())}</h2></div>`; deductHeaders.forEach(hd => { if (t.deds[hd] > 0) dedHtml += `<div class="s-card s-dynamic"><span>${hd}</span><h2>${formatVal(t.deds[hd].toLocaleString())}</h2></div>`; }); document.getElementById('finalDynamicGrid').innerHTML = dedHtml; }
+    function renderAwaySummary() { let h="", t=0, c=0; salaryData.slice(0,-1).forEach(p=>{if(p.isAway){ c++; t+=p.net; h+=`<tr><td>${formatVal(c,true)}</td><td>${formatVal(p.id,true)}</td><td>${p.rank}</td><td>${p.name}</td><td>${formatVal(p.net.toLocaleString())}</td></tr>`; }}); document.getElementById('awayTableBody').innerHTML=h; document.getElementById('awayGrandTotal').innerText=formatVal(t.toLocaleString()); }
+    function renderFolderList() { document.getElementById('nameListContainer').innerHTML = salaryData.slice(0,-1).map((p,i)=>`<div style="padding:15px; border-bottom:1px solid #eee;" onclick="viewVoucher(${i})">${formatVal(i+1,true)}။ ${p.rank} ${p.name}</div>`).join(''); }
+    function viewVoucher(i) { const p = salaryData[i]; const r = rvkData.find(x => x.id === p.id); const rd = r ? r.ded : 0; const today = new Date(); const dateStr = formatVal(today.getDate()) + "/" + formatVal(today.getMonth() + 1) + "/" + formatVal(today.getFullYear()); document.getElementById('currentVoucherName').value = p.name; document.getElementById('autoDateLabel').innerText = "ရက်စွဲ - " + dateStr; let dedListHtml = ""; deductHeaders.forEach(h => { const val = p.deds[h] || 0; if (val > 0) dedListHtml += `<div class="v-row" style="font-size:16px; border-bottom:1px dashed #ccc;"><span>${h}:</span><span>${formatVal(val.toLocaleString())}</span></div>`; }); document.getElementById('voucherBody').innerHTML = `<div class="v-row"><span>အမည်:</span><span>${p.rank} ${p.name}</span></div><div class="v-row"><span>ရရှိလစာ:</span><span>${formatVal(p.salary.toLocaleString())}</span></div><div style="background: #fdfdfd; padding: 5px 0;"><small style="color:#d90429; display:block; padding-bottom:5px;">[ ဖြတ်ငွေအသေးစိတ် ]</small>${dedListHtml}</div><div class="v-row"><span>ရေးဗက:</span><span>${formatVal(rd.toLocaleString())}</span></div><div class="v-row v-total"><span>အသားတင်:</span><span>${formatVal((p.net - rd).toLocaleString())}</span></div>`; showPage('voucherPage'); }
+    function downloadVoucher() { html2canvas(document.getElementById('voucherCapture')).then(c=>{ const a=document.createElement('a'); a.download=`${document.getElementById('currentVoucherName').value}.png`; a.href=c.toDataURL(); a.click(); }); }
+    async function shareVoucher() { const canvas = await html2canvas(document.getElementById('voucherCapture')); const name = document.getElementById('currentVoucherName').value || 'Voucher'; canvas.toBlob(async (blob) => { const file = new File([blob], `${name}.png`, { type: 'image/png' }); if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'လစာဘောင်ချာ', text: `${name} အတွက် လစာဘောင်ချာ` }); } catch (err) { console.error("Share error:", err); } } else { alert("ဒီ Browser မှာ Share လို့မရသေးပါ။ ဓာတ်ပုံအရင်သိမ်းပြီးမှ ပို့ပေးပါဗျာ။"); } }); }
+
+    // --- Excel Export (Sheet 3 ခုအား ဖိုင်တစ်ခုတည်းတွင် ပေါင်းထုတ်ခြင်း) ---
+    function exportAllToExcel() {
+        if (salaryData.length === 0) return alert("သိမ်းဆည်းရန် စာရင်းမရှိပါ။");
+        const sheetName = document.getElementById('sheetSelect').value || "Data";
+        const months = ["ဇန်နဝါရီလ", "ဖေဖော်ဝါရီလ", "မတ်လ", "ဧပြီလ", "မေလ", "ဇွန်လ", "ဇူလိုင်လ", "ဩဂုတ်လ", "စက်တင်ဘာလ", "အောက်တိုဘာလ", "နိုဝင်ဘာလ", "ဒီဇင်ဘာလ"];
+        const currentMonthName = months[new Date().getMonth()];
+        const finalFileName = `${currentMonthName}-${sheetName}-ပေါင်းချုပ်စာရင်း.xlsx`;
+        const workbook = XLSX.utils.book_new();
+
+        // 1. စာရင်းအားလုံး
+        const allDataRaw = salaryData.map((r, i) => {
+            const isT = i === salaryData.length - 1;
+            let obj = { "စဉ်": isT ? "စုစုပေါင်း" : (i + 1), "ကပအမှတ်": isT ? "" : r.id, "အဆင့်": r.rank, "အမည်": r.name, "လစာ": r.salary };
+            deductHeaders.forEach(h => obj[h] = r.deds[h] || 0);
+            obj["စုစုပေါင်းဖြတ်ငွေ"] = r.totalDed; obj["အသားတင်ထုတ်ငွေ"] = r.net; obj["အဝေးရောက်"] = isT ? "" : (r.isAway ? "Yes" : "No");
+            return obj;
+        });
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(allDataRaw), "စာရင်းအားလုံး");
+
+        // 2. အဝေးရောက်
+        const awayList = salaryData.slice(0, -1).filter(p => p.isAway);
+        let awayDataExport = awayList.map((p, i) => ({ "စဉ်": i + 1, "ကပအမှတ်": p.id, "အဆင့်": p.rank, "အမည်": p.name, "ထုတ်ပေးရမည့်ငွေ": p.net }));
+        if (awayList.length > 0) awayDataExport.push({ "စဉ်": "စုစုပေါင်း", "ကပအမှတ်": "", "အဆင့်": "", "အမည်": "", "ထုတ်ပေးရမည့်ငွေ": awayList.reduce((s, p) => s + p.net, 0) });
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(awayDataExport), "အဝေးရောက်စာရင်း");
+
+        // 3. ရေးဗက
+        let rvkDataExport = rvkData.map((r, i) => ({ "စဉ်": i + 1, "ကပအမှတ်": r.id, "အဆင့်": r.rank, "အမည်": r.name, "ထုတ်ငွေ": r.cash, "ရေးဗကဖြတ်ငွေ": r.ded, "အကြောင်းအရာ": r.note }));
+        if (rvkData.length > 0) rvkDataExport.push({ "စဉ်": "စုစုပေါင်း", "ကပအမှတ်": "", "အဆင့်": "", "အမည်": "", "ထုတ်ငွေ": rvkData.reduce((s, r) => s + r.cash, 0), "ရေးဗကဖြတ်ငွေ": rvkData.reduce((s, r) => s + r.ded, 0), "အကြောင်းအရာ": "" });
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rvkDataExport), "ရေးဗကစာရင်း");
+
+        XLSX.writeFile(workbook, finalFileName);
+    }
+
+    // --- System Backup (JSON) Functions ---
+    function saveSystemBackup() {
+        if (salaryData.length === 0) return alert("သိမ်းဆည်းရန် စာရင်းမရှိပါ။");
+        const backupData = { salary: salaryData, rvk: rvkData, headers: deductHeaders };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+        const months = ["ဇန်နဝါရီလ", "ဖေဖော်ဝါရီလ", "မတ်လ", "ဧပြီလ", "မေလ", "ဇွန်လ", "ဇူလိုင်လ", "ဩဂုတ်လ", "စက်တင်ဘာလ", "အောက်တိုဘာလ", "နိုဝင်ဘာလ", "ဒီဇင်ဘာလ"];
+        const fileName = `${months[new Date().getMonth()]}-backup-data.json`;
+        const link = document.createElement('a');
+        link.setAttribute("href", dataStr);
+        link.setAttribute("download", fileName);
+        link.click();
+    }
+
+    function loadSystemBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                salaryData = data.salary;
+                rvkData = data.rvk;
+                deductHeaders = data.headers;
+                updateAllSummaries();
+                updateRvkNameDropdown();
+                document.getElementById('summaryDisplay').style.display = 'grid';
+                document.getElementById('dynamicSection').style.display = 'block';
+                document.getElementById('mainControls').style.display = 'block';
+                alert("Backup မှတ်တမ်းအားလုံးကို ပြန်လည်တင်သွင်းပြီးပါပြီ။");
+            } catch (err) {
+                alert("ဖိုင်အမျိုးအစား မှားယွင်းနေပါသည်။");
+            }
+        };
+        reader.readAsText(file);
+    }
+</script>
+</body>
+</html>
